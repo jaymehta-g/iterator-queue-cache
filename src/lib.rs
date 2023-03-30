@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 extern crate queues; 
 use queues::*;
 use std::{error::*, fmt::Display};
@@ -6,9 +9,7 @@ use std::{error::*, fmt::Display};
  */
 type BoxResult<T> = Result<T,Box<dyn Error>>;
 /**
- * Error structs
- * EnqueueWhileIteratorIsEmptyError: When `enqueue()` is called but the iterator is empty
- * 
+ * When `enqueue()` is called but the iterator is empty
  */
 #[derive(Debug)]
 pub struct EnqueueWhileIteratorIsEmptyError;
@@ -44,12 +45,12 @@ where
     /**
      * Lets the struct cache further items after its creation
      */
-    fn enqueue(&mut self, quantity: u32) -> Result<(),impl Error> {
+    pub fn enqueue(&mut self, quantity: u32) -> BoxResult<()> {
         for _ in 0..quantity {
             if let Some(item) = self.iterator.next() {
-                self.queue.add(item);
+                self.queue.add(item)?;
             } else {
-                return Err(EnqueueWhileIteratorIsEmptyError);
+                return Err(Box::new(EnqueueWhileIteratorIsEmptyError {}));
             }
         }
         Ok(())
@@ -63,7 +64,9 @@ where
     T: Clone,
 {
     type Item = T;
-
+    /**
+     * Returns cached items if available, otherwise takes items from the owned iterator
+     */
     fn next(&mut self) -> Option<Self::Item> {
         if let Ok(item) = self.queue.remove() {
             return Some(item);
@@ -74,7 +77,13 @@ where
 pub trait IterateIntoQueue: Iterator
     where Self::Item: Clone 
 {
-    fn queue(self, quantity: u32) -> Result<IteratorQueueCache<Self::Item>, Box<Error>>;
+    /**
+     * Cache a given amount of items from this iterator for use later
+     */
+    fn queue(self, quantity: u32) -> BoxResult<IteratorQueueCache<Self::Item>>;
+    /**
+     * Cache all items from this iterator for use later
+     */
     fn queue_all(self) -> IteratorQueueCache<Self::Item>;
     fn queue_or_all(self, quantity: u32) -> IteratorQueueCache<Self::Item>;
 }
@@ -82,11 +91,9 @@ impl<'a,T> IterateIntoQueue for T
     where T: Iterator + 'static,
         T::Item: Clone
 {
-    fn queue(self, quantity: u32) -> Result<IteratorQueueCache<Self::Item>, EnqueueWhileIteratorIsEmptyError> {
+    fn queue(self, quantity: u32) -> BoxResult<IteratorQueueCache<Self::Item>> {
         let mut cache = IteratorQueueCache::new(self);
-        if let Err(error) = cache.enqueue(quantity) {
-            return Err(error);
-        }
+        cache.enqueue(quantity)?;
         Ok(cache)
     }
 
