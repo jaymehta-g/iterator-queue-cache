@@ -48,4 +48,47 @@ mod tests {
 		assert_eq!(iter.next(), Some(10));
 		assert_eq!(iter.next(), None);
 	}
+	#[test]
+	fn lasy_eval() {
+		static mut COUNTER: i32 = 0;
+		let mut iter = vec![1,2,3,4,5].into_iter()
+			.map(|i| {
+				unsafe { // unsafe for threading reasons, probably ok
+					COUNTER += 1;
+				}
+				i*2
+			});
+		unsafe {
+			assert_eq!(COUNTER,0);
+		}
+		let mut iter = iter.queue(2).unwrap();
+		unsafe {
+			assert_eq!(COUNTER,2);
+		}
+		iter.enqueue(2);
+		unsafe {
+			assert_eq!(COUNTER,4);
+			COUNTER = 0;
+		}
+		let mut iter = vec![1,2,3,4,5].into_iter()
+			.map(|i| {
+				unsafe { // unsafe for threading reasons, probably ok
+					COUNTER += 1;
+				}
+				i*2
+			})
+			.queue_all();
+		unsafe {
+			assert_eq!(COUNTER,5);
+		}
+		
+	}
+	#[test]
+	fn return_errors() {
+		let err = (0..5).queue(40);
+		match err {
+			Ok(_) => panic!(),
+			Err(_) => (),
+		}
+	}
 }

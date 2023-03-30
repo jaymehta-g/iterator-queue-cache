@@ -85,6 +85,9 @@ pub trait IterateIntoQueue: Iterator
      * Cache all items from this iterator for use later
      */
     fn queue_all(self) -> IteratorQueueCache<Self::Item>;
+    /**
+     * Cache a given amount of items from this iterator for use later, or end early if the iterator runs out
+     */
     fn queue_or_all(self, quantity: u32) -> IteratorQueueCache<Self::Item>;
 }
 impl<'a,T> IterateIntoQueue for T
