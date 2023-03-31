@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
-	use crate::*;
+
+use crate::*;
 	#[test]
 	fn queue_some() {
-		let mut iter = vec![1,2,3,4,5].into_iter().queue(3).unwrap();
+		let mut iter = vec![1,2,3,4,5].into_iter().cache(3).unwrap();
 		assert_eq!(iter.next(), Some(1));
 		assert_eq!(iter.next(), Some(2));
 		assert_eq!(iter.next(), Some(3));
@@ -14,11 +15,11 @@ mod tests {
 	#[test]
 	#[should_panic]
 	fn queue_too_many() {
-		let mut iter = vec![1,2,3,4,5].into_iter().queue(6).unwrap();
+		let mut iter = vec![1,2,3,4,5].into_iter().cache(6).unwrap();
 	}
 	#[test]
 	fn queue_all() {
-		let mut iter = vec![1,2,3,4,5].into_iter().queue_all();
+		let mut iter = vec![1,2,3,4,5].into_iter().cache_all();
 		assert_eq!(iter.next(), Some(1));
 		assert_eq!(iter.next(), Some(2));
 		assert_eq!(iter.next(), Some(3));
@@ -28,7 +29,7 @@ mod tests {
 	}
 	#[test]
 	fn queue_overshoot_ok() {
-		let mut iter = vec![1,2,3,4,5].into_iter().queue_or_all(500);
+		let mut iter = vec![1,2,3,4,5].into_iter().cache_or_all(500);
 		assert_eq!(iter.next(), Some(1));
 		assert_eq!(iter.next(), Some(2));
 		assert_eq!(iter.next(), Some(3));
@@ -40,7 +41,7 @@ mod tests {
 	fn iterator_methods() {
 		let mut iter = vec![1,2,3,4,5].into_iter()
 			.map(|i| i*2)
-			.queue_all();
+			.cache_all();
 		assert_eq!(iter.next(), Some(2));
 		assert_eq!(iter.next(), Some(4));
 		assert_eq!(iter.next(), Some(6));
@@ -61,11 +62,11 @@ mod tests {
 		unsafe {
 			assert_eq!(COUNTER,0);
 		}
-		let mut iter = iter.queue(2).unwrap();
+		let mut iter = iter.cache(2).unwrap();
 		unsafe {
 			assert_eq!(COUNTER,2);
 		}
-		iter.enqueue(2);
+		iter.cache_more(2);
 		unsafe {
 			assert_eq!(COUNTER,4);
 			COUNTER = 0;
@@ -77,7 +78,7 @@ mod tests {
 				}
 				i*2
 			})
-			.queue_all();
+			.cache_all();
 		unsafe {
 			assert_eq!(COUNTER,5);
 		}
@@ -85,10 +86,16 @@ mod tests {
 	}
 	#[test]
 	fn return_errors() {
-		let err = (0..5).queue(40);
+		let err = (0..5).cache(40);
 		match err {
 			Ok(_) => panic!(),
 			Err(_) => (),
 		}
+	}
+	#[test]
+	fn from_doc_test() {
+		let mut cache = (0..5).cache_or_all(2); // Caches 2 values
+     	cache.cache_more(2).unwrap(); // Caches 2 more values for a total of 4
+    	cache.for_each(|i| println!("{}",i)); // Exhausts the 4 values in the cache, then prints the last item directly out of the iterator
 	}
 }
