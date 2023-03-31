@@ -1,3 +1,7 @@
+//! # Iterator Cache
+//! 'Unlazies your evaluation' by caching items from your iterator now to be used later. 
+//! 
+//! Could be useful when an iterator is running an expensive operation and you'd rather it run now and store the values for later than perform the operation later.
 #[cfg(test)]
 #[allow(rustdoc::invalid_codeblock_attributes)]
 mod tests;
@@ -16,7 +20,6 @@ impl Display for EnqueueWhileIteratorIsEmptyError {
     }
 }
 impl Error for EnqueueWhileIteratorIsEmptyError {}
-/// An iterator that 'unlazies your evaluation' by caching items from your iterator now to be used later. 
 /// Extract a certain amount of items from any iterator into a cache with the `cache()` method.
 /// When extracting from the resulting iterator, items will first be pulled from cache until it is exhausted .
 pub struct IteratorCache<T: Clone>

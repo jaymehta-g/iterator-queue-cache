@@ -1,5 +1,6 @@
 [package]
-name = "iterator-queue-cache"
+name = "iterator-cache"
+authors = ["jay"]
 version = "0.1.0"
 edition = "2021"
 
